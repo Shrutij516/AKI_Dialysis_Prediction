@@ -20,22 +20,22 @@ This task is framed as a binary classification problem:
 
 The dataset consists of structured EHR variables, including:
 - Patient Demographics
--      Age
--      Sex
--      Admission characteristics
+     - Age
+     - Sex
+     - Admission characteristics
 - Laboratory Variables
--      Serum creatinine
--      Blood urea nitrogen (BUN)
--      Electrolytes
--      Other kidney function markers
+     - Serum creatinine
+     - Blood urea nitrogen (BUN)
+     - Electrolytes
+     - Other kidney function markers
 - Comorbidities
--      Hypertension
--      Diabetes
--      Chronic kidney disease history
+     - Hypertension
+     - Diabetes
+     - Chronic kidney disease history
 -  Clinical Measurements
--       Vitals
--        Clinical lab results
--         Hospital encounter variables
+     - Vitals
+     - Clinical lab results
+     - Hospital encounter variables
 
 Due to patient privacy and HIPAA restrictions, raw EHR data cannot be shared.
 
@@ -43,7 +43,7 @@ Due to patient privacy and HIPAA restrictions, raw EHR data cannot be shared.
 
 The project follows a standard ML pipeline for clinical prediction tasks.
 
-1. Data Preprocessing
+## 1. Data Preprocessing
 
 Preprocessing steps include:
 - Handling missing clinical values
@@ -54,7 +54,7 @@ Preprocessing steps include:
 
 Clinical datasets often contain substantial missingness and require careful preprocessing.
 
-## Feature Engineering
+## 2. Feature Engineering
 
 Features are derived from multiple clinical domains:
 - Laboratory trends
@@ -82,7 +82,7 @@ This imbalance can cause models to bias toward predicting the majority class.
 
 Handling class imbalance is critical for clinical risk prediction tasks.
 
-## Models Explored
+## 3. Models training
 
 Several baseline models were implemented to compare predictive performance.
 
@@ -124,7 +124,7 @@ Where:
 
 When handling class imbalance, weighted versions of cross-entropy can be used.
 
-## Model Evaluation
+## 4. Model Evaluation
 
 Model performance is evaluated using metrics relevant to clinical decision-support systems.
 
