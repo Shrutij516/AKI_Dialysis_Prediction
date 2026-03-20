@@ -64,7 +64,7 @@ Features are derived from multiple clinical domains:
 
 Feature engineering helps improve model interpretability and predictive power.
 
-## Class Imbalance Challenge
+## 3. Handling Class Imbalance 
 
 In clinical datasets, dialysis events are relatively rare, resulting in strong class imbalance.
 
@@ -82,7 +82,7 @@ This imbalance can cause models to bias toward predicting the majority class.
 
 Handling class imbalance is critical for clinical risk prediction tasks.
 
-## 3. Models training
+## 4. Models training
 
 Several baseline models were implemented to compare predictive performance.
 
@@ -124,7 +124,7 @@ Where:
 
 When handling class imbalance, weighted versions of cross-entropy can be used.
 
-## 4. Model Evaluation
+## 5. Model Evaluation
 
 Model performance is evaluated using metrics relevant to clinical decision-support systems.
 
@@ -148,14 +148,9 @@ High sensitivity is important to ensure high-risk patients are identified.
 
 The workflow consists of:
 
-Data Cleaning
-     ↓
-Feature Engineering
-     ↓
-Model Training
-     ↓
-Hyperparameter Tuning
-     ↓
-Model Evaluation
-     ↓
-Clinical Risk Analysis
+1. Data Cleaning  
+2. Feature Engineering  
+3. Model Training  
+4. Hyperparameter Tuning  
+5. Model Evaluation  
+6. Clinical Risk Analysis
