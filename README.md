@@ -4,13 +4,13 @@
 
 Acute Kidney Injury (AKI) is a critical clinical condition that can progress to kidney failure requiring dialysis. Early identification of high-risk patients is essential for improving patient outcomes and enabling timely medical intervention.
 
-This project develops machine learning models to predict dialysis requirement in AKI patients using structured Electronic Health Record (EHR) features.
+This project develops machine learning models to predict dialysis requirement in AKI patients using structured Electronic Health Record (EHR) data, including temporal clinical events.
 
 The work is conducted as part of a course-based research project at Stony Brook University.
 
 ## Problem Statement
 
-Given a patient admitted with Acute Kidney Injury, predict whether the patient will require dialysis during the hospital stay using structured clinical features extracted from Electronic Health Records.
+Given a patient diagnosed with Acute Kidney Injury (AKI), predict whether the patient will progress to dialysis or end-stage renal disease (ESRD) within a future time window.
 
 This task is framed as a binary classification problem:
 - Input: Structured EHR features
@@ -19,50 +19,71 @@ This task is framed as a binary classification problem:
 ## Dataset
 
 The dataset consists of structured EHR variables, including:
-- Patient Demographics
-     - Age
-     - Sex
-     - Admission characteristics
-- Laboratory Variables
-     - Serum creatinine
-     - Blood urea nitrogen (BUN)
-     - Electrolytes
-     - Other kidney function markers
-- Comorbidities
-     - Hypertension
-     - Diabetes
-     - Chronic kidney disease history
--  Clinical Measurements
-     - Vitals
-     - Clinical lab results
-     - Hospital encounter variables
+
+- Diagnosis codes (ICD)
+- Procedure codes (CPT / ICD)
+- Medication records
+- Laboratory data (planned extension)
+- Patient timeline events
+
+1. Cohort Definition
+   - AKI Identified using:
+          - ICD-10: N17*
+          - ICD-9: 584*
+   - Index date = first AKI diagnosis
+   - Patients with prior ESRD removed:
+          - ICD-10: N18.6
+          - ICD-9: 585.6
+3. Outcome Definition
+   - Prediction window: 2 years after AKI
+   - Positive class:
+          - ESRD OR dialysis
+   - Final prevalence: ~10% positive cases
+5. Scale of Data
+   - Diagnosis events: ~3.28M
+   - Procedure events: ~2.61M
+   - Medication events: ~2.89M
+   - Total events processed: ~8.7 million
+   - Vocabulary size: ~60K unique tokens
+
+This large-scale longitudinal dataset enables modeling of complex temporal clinical patterns.
 
 Due to patient privacy and HIPAA restrictions, raw EHR data cannot be shared.
 
 ## Machine Learning Pipeline
 
-The project follows a standard ML pipeline for clinical prediction tasks.
+The project follows a temporal ML pipeline tailored for clinical sequence modeling.
 
 ## 1. Data Preprocessing
 
 Preprocessing steps include:
-- Handling missing clinical values
-- Median / domain-informed imputation
-- Feature normalization and scaling
-- Encoding categorical variables
-- Filtering rare or noisy variables
 
-Clinical datasets often contain substantial missingness and require careful preprocessing.
+- Cohort construction and leakage prevention
+- Observation window design:
+       - 1-year and 90-day variants
+- Alignment of events within observation window:
+       - obs_start_date ≤ event_date < index_date
+- Removal of sparse patients (e.g., <3 events)
+- Fixing ingestion/alignment issues in raw data
+
 
 ## 2. Feature Engineering
 
-Features are derived from multiple clinical domains:
-- Laboratory trends
-- Demographic indicators
-- Comorbidity flags
-- Derived clinical risk markers
+### Multi-Modal Event Integration
+Combined multiple EHR modalities:
+- Diagnoses
+- Procedures
+- Medications
 
-Feature engineering helps improve model interpretability and predictive power.
+### Sequence Construction
+Patient data transformed into chronological sequences:
+Example:
+[Diagnosis] → [Medication] → [Procedure]
+- Total events processed: ~8.7M
+- Sequence length capped at 400
+
+This enables modeling of temporal clinical progression.
+
 
 ## 3. Handling Class Imbalance 
 
@@ -84,65 +105,73 @@ Handling class imbalance is critical for clinical risk prediction tasks.
 
 ## 4. Models training
 
-Several baseline models were implemented to compare predictive performance.
+### Transformer-Based Model
+A self-attention based architecture was used to capture long-range dependencies in patient history.
 
-### Logistic Regression
+Key components:
+- Token + positional embeddings
+- Multi-head self-attention
+- Feedforward layers
+- Global pooling for classification
 
-Used as an interpretable baseline model for clinical prediction.
+### Hyperparameters
+- Embedding dimension: 128 (selected over 256)
+- Number of heads: 4
+- Max sequence length: 400
 
-### Random Forest
+### Loss Functions
+- Focal Loss (used)
+- Used to address class imbalance:
+       - Alpha ∈ {0.25, 0.5, 0.75}
+       - Gamma = 2.0
 
-Captures nonlinear relationships between clinical variables.
-
-### Gradient Boosting
-
-Improves predictive performance through ensemble learning.
-
-## Sequence-Based Extensions (Future Work)
-
-Clinical data can contain temporal sequences of lab values and vitals.
-
-Future extensions of this work include:
-- Recurrent neural networks (LSTM / GRU)
-- Transformer-based architectures for sequential EHR modeling
-- Temporal feature embeddings
-
-Sequence models may better capture progression of kidney injury over time.
-
-## Loss Functions
-
-Standard binary classification loss was used:
-
-### Binary Cross-Entropy Loss
-L = -[y log(p) + (1-y) log(1-p)]
-
-Where:
-
-- 𝑦 = true label
-
-- 𝑝 = predicted probability
-
-When handling class imbalance, weighted versions of cross-entropy can be used.
+This forces the model to focus on hard-to-predict minority class samples.
 
 ## 5. Model Evaluation
-
-Model performance is evaluated using metrics relevant to clinical decision-support systems.
+- Model performance is evaluated using clinically relevant metrics:
 
 ### ROC-AUC
-
-Measures ability of the model to discriminate between dialysis and non-dialysis patients.
+Measures discrimination ability.
 
 ### F1 Score
-
 Balances precision and recall.
 
-### Sensitivity (Recall)
+### Precision / Recall
+Precision: reliability of positive predictions
+Recall: ability to detect high-risk patients
 
-Critical in healthcare settings to minimize missed high-risk patients.
 
-- Sensitivity = True Positives / (True Positives + False Negatives)
+## 6. Hyperparameter Optimization
+### Threshold Tuning
+- Searched thresholds from 0.05 to 0.95 (step 0.01)
+- Selected threshold maximizing F1 score
 
-High sensitivity is important to ensure high-risk patients are identified.
+### Alpha Tuning
+- Tested α ∈ {0.25, 0.5, 0.75}
+
+### Hidden Dimension Tuning
+- Compared 128 vs 256
+- Selected 128 for better generalization
+
+### Grid Search
+- α ∈ {0.25, 0.5}
+- Dropout ∈ {0.1, 0.2}
+- Best config selected automatically based on F1
+
+
+## 7. Results
+### 1-Year Observation Window
+- F1 ≈ 0.28
+- ROC-AUC ≈ 0.68
+
+### 90-Day Observation Window
+- F1 ≈ 0.23
+- ROC-AUC ≈ 0.66
+
+### Comparison Insight
+- Longer observation window improves performance
+- Captures chronic disease progression patterns
+
 
 ## Experimental Workflow
 
